@@ -1,0 +1,17 @@
+{
+  "name": "mdh",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@polkadot/api": "^0.90.0-beta.24",
+    "@polkadot/dev": "0.30.0-beta.24",
+    "bitmap-manipulation": "^2.0.0",
+    "express": "^4.17.1"
+  }
+}
