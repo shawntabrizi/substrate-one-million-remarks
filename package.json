@@ -1,17 +1,31 @@
 {
-  "name": "mdh",
-  "version": "1.0.0",
-  "description": "",
+  "name": "node-js-getting-started",
+  "version": "0.3.0",
+  "description": "A sample Node.js app using Express 4",
+  "engines": {
+    "node": "10.x"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node test.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@polkadot/api": "^0.90.0-beta.24",
-    "@polkadot/dev": "0.30.0-beta.24",
-    "bitmap-manipulation": "^2.0.0",
-    "express": "^4.17.1"
-  }
+    "ejs": "^2.5.6",
+    "express": "^4.15.2"
+  },
+  "devDependencies": {
+    "request": "^2.81.0",
+    "tape": "^4.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroku/node-js-getting-started"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
 }
