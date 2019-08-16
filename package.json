@@ -1,17 +1,34 @@
 {
-  "name": "mdh",
-  "version": "1.0.0",
+  "name": "substrate-one-million-remarks",
+  "version": "0.0.1",
   "description": "",
+  "engines": {
+    "node": "12.x"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node test.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@polkadot/api": "^0.90.0-beta.24",
-    "@polkadot/dev": "0.30.0-beta.24",
+    "@polkadot/api": "^0.90.0-beta.40",
     "bitmap-manipulation": "^2.0.0",
-    "express": "^4.17.1"
-  }
+    "ejs": "^2.5.6",
+    "express": "^4.15.2"
+  },
+  "devDependencies": {
+    "request": "^2.81.0",
+    "tape": "^4.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shawntabrizi/substrate-one-million-remarks"
+  },
+  "keywords": [
+    "substrate",
+    "polkadot",
+    "kusama",
+    "blockchain"
+  ],
+  "license": "MIT"
 }

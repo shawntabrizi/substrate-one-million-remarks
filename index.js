@@ -1,19 +1,20 @@
-var express = require("express");
+const express = require('express')
+const path = require('path')
+const PORT = process.env.PORT || 5000
+
+express()
+  .use(express.static(path.join(__dirname, 'public')))
+  .set('views', path.join(__dirname, 'views'))
+  .set('view engine', 'ejs')
+  .get('/', (req, res) => res.render('pages/index'))
+  .get('/get', (req, res) => res.json({
+    image: [0, 0, 1]
+  }))
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+
 var api = require("@polkadot/api");
 var { ApiPromise, WsProvider } = require("@polkadot/api");
 var bitmapManipulation = require("bitmap-manipulation");
-
-const app = express();
-
-app.get("/get", function(req, res) {
-  res.json({
-    image: [0, 0, 1]
-  });
-});
-
-app.listen(process.env.PORT, () =>
-  console.log(`Example app listening on port ${process.env.PORT}!`)
-);
 
 function toHexString(byteArray) {
   return Array.from(byteArray, function(byte) {
@@ -79,7 +80,7 @@ function updateImage(pixel) {
   let scalar = 5;
 
   try {
-    bitmap = bitmapManipulation.BMPBitmap.fromFile("image.bmp");
+    bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
     console.log("file found");
   } catch {
     console.log("file NOT found");
@@ -98,17 +99,21 @@ function updateImage(pixel) {
     bitmap.palette.indexOf(color)
   );
 
-  bitmap.save("image.bmp");
+  bitmap.save("./public/image.bmp");
 }
 
 async function main() {
-  // Here we don't pass the (optional) provider, connecting directly to the default
-  // node/port, i.e. `ws://127.0.0.1:9944`. Await for the isReady promise to ensure
-  // the API has connected to the node and completed the initialisation process
-  const WS_PROVIDER = 'wss://dev-node.substrate.dev:9944';
-  const provider = new WsProvider(WS_PROVIDER);
+  const provider = new WsProvider('wss://dev-node.substrate.dev:9944');
 
-  const api = await ApiPromise.create(provider);
+  const api = await ApiPromise.create({provider});
+
+  const [chain, nodeName, nodeVersion] = await Promise.all([
+    api.rpc.system.chain(),
+    api.rpc.system.name(),
+    api.rpc.system.version()
+  ]);
+
+  console.log(`You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`);
 
   // Subscribe to the new headers on-chain. The callback is fired when new headers
   // are found, the call itself returns a promise with a subscription that can be
