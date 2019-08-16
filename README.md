@@ -6,8 +6,8 @@
 
 You can test this app by [running a local Substrate node](https://substrate.dev/docs/en/getting-started/installing-substrate).
 
-1. Start the Substrate node (connects on `ws://127.0.0.1:9944`)
-2. Start the app with `PORT=8888 node index.js`
+1. Start the Substrate node (connects on `ws://127.0.0.1:9944` or `wss://dev-node.substrate.dev:9944`)
+2. Start the app with `yarn && yarn start`
 3. Open the [Polkadot UI](https://polkadot.js.org/apps/#/extrinsics) to submit an extrinsic.
 4. Call `system > remark` with the following `_remark: Bytes` as a hex string:
 
