@@ -83,7 +83,8 @@ function updateImage(pixel) {
     bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
   } catch {
     bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
-    bitmap.clear(bitmap.palette.indexOf(0xc0c0c0));
+    // Start with a black image
+    bitmap.clear(bitmap.palette.indexOf(0x000000));
   }
 
   bitmap.drawFilledRect(
