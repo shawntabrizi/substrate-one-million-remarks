@@ -15,7 +15,7 @@ express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 var { ApiPromise, WsProvider } = require("@polkadot/api");
-var bitmapManipulation = require("bitmap-manipulation");
+var Jimp = require('jimp');
 
 function toHexString(byteArray) {
   return Array.from(byteArray, function(byte) {
@@ -53,12 +53,12 @@ function parseBuffer(buffer) {
     magic = parseInt(string.slice(0, 4));
     x = parseInt(string.slice(4, 7));
     y = parseInt(string.slice(7, 10));
-    color = parseInt("0x" + string.slice(10));
+    color = parseInt("0x" + string.slice(10) + "ff");
   } catch {
     console.log("Bad Info");
   }
 
-  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffff) {
+  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffffff || color < 0x000000ff) {
     console.log("Out of Bounds");
     return null;
   }
@@ -72,31 +72,25 @@ function parseBuffer(buffer) {
   return pixel;
 }
 
-function updateImage(pixel) {
+async function updateImage(pixel) {
   let x = pixel.x;
   let y = pixel.y;
   let color = pixel.color;
-  let bitmap;
-  let scalar = 1;
+  let image;
 
   try {
-    bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
+    image = await Jimp.read('./public/image.jpg');
+    console.log("file found")
   } catch {
-    bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
-    // Start with a black image
-    bitmap.clear(bitmap.palette.indexOf(0x000000));
+    console.log("file not found")
+    image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
+      if (err) throw err
+    });
   }
 
-  bitmap.drawFilledRect(
-    x,
-    y,
-    1 * scalar,
-    1 * scalar,
-    null,
-    bitmap.palette.indexOf(color)
-  );
+  await image.setPixelColor(color, x, y);
 
-  bitmap.save("./public/image.bmp");
+  image.write("./public/image.jpg");
 }
 
 async function main() {
@@ -127,7 +121,7 @@ async function main() {
           let pixel = parseBuffer(extrinsic.args[0]);
           console.log("Pixel: ", pixel);
           if (pixel) {
-            updateImage(pixel);
+            await updateImage(pixel);
           }
         }
       }
