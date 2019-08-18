@@ -1,18 +1,19 @@
-const express = require('express')
-const path = require('path')
-const PORT = process.env.PORT || 5000
+const express = require("express");
+const path = require("path");
+const PORT = process.env.PORT || 5000;
 
 express()
-  .use(express.static(path.join(__dirname, 'public')))
-  .set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs')
-  .get('/', (req, res) => res.render('pages/index'))
-  .get('/get', (req, res) => res.json({
-    image: [0, 0, 1]
-  }))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+  .use(express.static(path.join(__dirname, "public")))
+  .set("views", path.join(__dirname, "views"))
+  .set("view engine", "ejs")
+  .get("/", (req, res) => res.render("pages/index"))
+  .get("/get", (req, res) =>
+    res.json({
+      image: [0, 0, 1]
+    })
+  )
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
-var api = require("@polkadot/api");
 var { ApiPromise, WsProvider } = require("@polkadot/api");
 var bitmapManipulation = require("bitmap-manipulation");
 
@@ -29,7 +30,6 @@ function parseBuffer(buffer) {
   }
 
   let string = toHexString(buffer);
-  console.log("Stringified: ", string);
 
   if (string.length != 4 + 3 + 3 + 6) {
     console.log("Wrong Length");
@@ -77,17 +77,13 @@ function updateImage(pixel) {
   let y = pixel.y;
   let color = pixel.color;
   let bitmap;
-  let scalar = 5;
+  let scalar = 1;
 
   try {
     bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
-    console.log("file found");
   } catch {
-    console.log("file NOT found");
-
-	bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
-	bitmap.clear(bitmap.palette.indexOf(0xc0c0c0));
-
+    bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
+    bitmap.clear(bitmap.palette.indexOf(0xc0c0c0));
   }
 
   bitmap.drawFilledRect(
@@ -103,9 +99,9 @@ function updateImage(pixel) {
 }
 
 async function main() {
-  const provider = new WsProvider('wss://dev-node.substrate.dev:9944');
+  const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
 
-  const api = await ApiPromise.create({provider});
+  const api = await ApiPromise.create({ provider });
 
   const [chain, nodeName, nodeVersion] = await Promise.all([
     api.rpc.system.chain(),
@@ -113,32 +109,29 @@ async function main() {
     api.rpc.system.version()
   ]);
 
-  console.log(`You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`);
+  console.log(
+    `You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`
+  );
 
   // Subscribe to the new headers on-chain. The callback is fired when new headers
   // are found, the call itself returns a promise with a subscription that can be
   // used to unsubscribe from the newHead subscription
-  const unsubscribe = await api.rpc.chain.subscribeFinalizedHeads(
-    async header => {
-      //console.log(`Chain is at block: #${header.number}`);
-      await api.rpc.chain.getBlock(header.hash, async block => {
-        console.log("Block is: ", block.block.header.number.toNumber());
-        let extrinsics = await block.block.extrinsics;
-        //console.log("Block Extrinsics:", extrinsics);
-        for (extrinsic of extrinsics) {
-          if (extrinsic.callIndex[0] == 0 && extrinsic.callIndex[1] == 1) {
-            console.log("Extrinsic Payload: ", extrinsic.args[0]);
-
-            let pixel = parseBuffer(extrinsic.args[0]);
-            console.log("Pixel: ", pixel);
-            if (pixel) {
-              updateImage(pixel);
-            }
+  const unsubscribe = await api.rpc.chain.subscribeNewHead(async header => {
+    await api.rpc.chain.getBlock(header.hash, async block => {
+      console.log("Block is: ", block.block.header.number.toNumber());
+      let extrinsics = await block.block.extrinsics;
+      for (extrinsic of extrinsics) {
+        // This specific call index [0,1] represents `system.remark`
+        if (extrinsic.callIndex[0] == 0 && extrinsic.callIndex[1] == 1) {
+          let pixel = parseBuffer(extrinsic.args[0]);
+          console.log("Pixel: ", pixel);
+          if (pixel) {
+            updateImage(pixel);
           }
         }
-      });
-    }
-  );
+      }
+    });
+  });
 }
 
 main().catch(console.error);
