@@ -7,15 +7,10 @@ express()
   .set("views", path.join(__dirname, "views"))
   .set("view engine", "ejs")
   .get("/", (req, res) => res.render("pages/index"))
-  .get("/get", (req, res) =>
-    res.json({
-      image: [0, 0, 1]
-    })
-  )
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 var { ApiPromise, WsProvider } = require("@polkadot/api");
-var Jimp = require('jimp');
+var Jimp = require("jimp");
 
 function toHexString(byteArray) {
   return Array.from(byteArray, function(byte) {
@@ -35,18 +30,7 @@ function parseBuffer(buffer) {
     console.log("Wrong Length");
     return null;
   }
-  /*
-  let buf = new Uint16Array(buffer.slice(0, 6).buffer);
-  if (buf[0] != 14099 || buf[1] > 1000 || buf[2] > 1000) {
-    console.log("Wrong Info");
-    return null;
-  }
 
-  let x = buf[1];
-  let y = buf[2];
-
-  let color = new Uint8Array(buffer.slice(6));
-  */
   let magic, x, y, color;
 
   try {
@@ -58,7 +42,13 @@ function parseBuffer(buffer) {
     console.log("Bad Info");
   }
 
-  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffffff || color < 0x000000ff) {
+  if (
+    magic != 1337 ||
+    x > 999 ||
+    y > 999 ||
+    color > 0xffffffff ||
+    color < 0x000000ff
+  ) {
     console.log("Out of Bounds");
     return null;
   }
@@ -80,50 +70,65 @@ async function updateImage(image, pixel) {
   await image.setPixelColor(color, x, y);
 }
 
+// Main function which needs to run at start
 async function main() {
+  // Substrate node we are connected to and listening to remarks
   const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
 
   const api = await ApiPromise.create({ provider });
 
+  // Get general information about the node we are connected to
   const [chain, nodeName, nodeVersion] = await Promise.all([
     api.rpc.system.chain(),
     api.rpc.system.name(),
     api.rpc.system.version()
   ]);
-
   console.log(
     `You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`
   );
 
+  // Jimp Image
   let image;
+
+  // Try to open the file, else create a new JIMP
   try {
-    image = await Jimp.read('./public/image.jpg');
-    console.log("file found")
+    image = await Jimp.read("./public/image.bmp");
+    console.log("file found");
   } catch (e) {
     console.log("file not found: ", e);
     image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
-      if (err) throw err
+      if (err) throw err;
     });
   }
 
-  // Subscribe to the new headers on-chain. The callback is fired when new headers
-  // are found, the call itself returns a promise with a subscription that can be
-  // used to unsubscribe from the newHead subscription
+  // Subscribe to new blocks being produced, not necessarily finalized ones.
   const unsubscribe = await api.rpc.chain.subscribeNewHead(async header => {
     await api.rpc.chain.getBlock(header.hash, async block => {
       console.log("Block is: ", block.block.header.number.toNumber());
+      // Extrinsics in the block
       let extrinsics = await block.block.extrinsics;
+      // Variable to check if we need to update the image
+      let update = false;
+
+      // Check each extrinsic in the block
       for (extrinsic of extrinsics) {
         // This specific call index [0,1] represents `system.remark`
         if (extrinsic.callIndex[0] == 0 && extrinsic.callIndex[1] == 1) {
+          // Get the `byte` data from a `remark`
           let pixel = parseBuffer(extrinsic.args[0]);
           console.log("Pixel: ", pixel);
           if (pixel) {
             await updateImage(image, pixel);
+            update = true;
           }
         }
       }
-      await image.write("./public/image.jpg");
+
+      // Check if we need to update the image
+      if (update) {
+        await image.write("./public/image.bmp");
+        await image.write("./public/image.jpg");
+      }
     });
   });
 }
