@@ -72,25 +72,12 @@ function parseBuffer(buffer) {
   return pixel;
 }
 
-async function updateImage(pixel) {
+async function updateImage(image, pixel) {
   let x = pixel.x;
   let y = pixel.y;
   let color = pixel.color;
-  let image;
-
-  try {
-    image = await Jimp.read('./public/image.jpg');
-    console.log("file found")
-  } catch {
-    console.log("file not found")
-    image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
-      if (err) throw err
-    });
-  }
 
   await image.setPixelColor(color, x, y);
-
-  image.write("./public/image.jpg");
 }
 
 async function main() {
@@ -108,6 +95,17 @@ async function main() {
     `You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`
   );
 
+  let image;
+  try {
+    image = await Jimp.read('./public/image.jpg');
+    console.log("file found")
+  } catch (e) {
+    console.log("file not found: ", e);
+    image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
+      if (err) throw err
+    });
+  }
+
   // Subscribe to the new headers on-chain. The callback is fired when new headers
   // are found, the call itself returns a promise with a subscription that can be
   // used to unsubscribe from the newHead subscription
@@ -121,10 +119,11 @@ async function main() {
           let pixel = parseBuffer(extrinsic.args[0]);
           console.log("Pixel: ", pixel);
           if (pixel) {
-            await updateImage(pixel);
+            await updateImage(image, pixel);
           }
         }
       }
+      await image.write("./public/image.jpg");
     });
   });
 }
