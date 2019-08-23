@@ -77,8 +77,8 @@ async function updateImage(bitmap, pixel) {
 // Main function which needs to run at start
 async function main() {
   // Substrate node we are connected to and listening to remarks
-  // const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
-  const provider = new WsProvider("wss://canary-0.kusama.network");
+  const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
+  // const provider = new WsProvider("wss://canary-0.kusama.network");
 
   const api = await ApiPromise.create({ provider });
 
