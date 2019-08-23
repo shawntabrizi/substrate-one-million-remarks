@@ -10,7 +10,8 @@ express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 var { ApiPromise, WsProvider } = require("@polkadot/api");
-var Jimp = require("jimp");
+var bitmapManipulation = require("bitmap-manipulation");
+var Jimp = require('jimp');
 
 function toHexString(byteArray) {
   return Array.from(byteArray, function(byte) {
@@ -37,18 +38,12 @@ function parseBuffer(buffer) {
     magic = parseInt(string.slice(0, 4));
     x = parseInt(string.slice(4, 7));
     y = parseInt(string.slice(7, 10));
-    color = parseInt("0x" + string.slice(10) + "ff");
+    color = parseInt("0x" + string.slice(10));
   } catch {
     console.log("Bad Info");
   }
 
-  if (
-    magic != 1337 ||
-    x > 999 ||
-    y > 999 ||
-    color > 0xffffffff ||
-    color < 0x000000ff
-  ) {
+  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffff) {
     console.log("Out of Bounds");
     return null;
   }
@@ -62,18 +57,28 @@ function parseBuffer(buffer) {
   return pixel;
 }
 
-async function updateImage(image, pixel) {
+function convertToJPG() {
+  Jimp.read('./public/image.bmp', (err, image) => {
+    if (err) throw err;
+    image
+      .quality(100) // set JPEG quality
+      .write('./public/image.jpg'); // save
+  });
+}
+
+async function updateImage(bitmap, pixel) {
   let x = pixel.x;
   let y = pixel.y;
   let color = pixel.color;
 
-  await image.setPixelColor(color, x, y);
+  bitmap.drawFilledRect(x, y, 1, 1, null, bitmap.palette.indexOf(color));
 }
 
 // Main function which needs to run at start
 async function main() {
   // Substrate node we are connected to and listening to remarks
-  const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
+  // const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
+  const provider = new WsProvider("wss://canary-0.kusama.network");
 
   const api = await ApiPromise.create({ provider });
 
@@ -87,18 +92,19 @@ async function main() {
     `You are connected to chain ${chain} using ${nodeName} v${nodeVersion}`
   );
 
-  // Jimp Image
-  let image;
+  // Bitmap Image
+  let bitmap;
 
-  // Try to open the file, else create a new JIMP
+  // Try to open the file, else create a new bitmap
   try {
-    image = await Jimp.read("./public/image.bmp");
+    bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
     console.log("file found");
-  } catch (e) {
-    console.log("file not found: ", e);
-    image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
-      if (err) throw err;
-    });
+  } catch {
+    console.log("file NOT found");
+    bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
+    bitmap.clear(bitmap.palette.indexOf(0x000000));
+    bitmap.save("./public/image.bmp");
+    convertToJPG();
   }
 
   // Subscribe to new blocks being produced, not necessarily finalized ones.
@@ -118,7 +124,7 @@ async function main() {
           let pixel = parseBuffer(extrinsic.args[0]);
           console.log("Pixel: ", pixel);
           if (pixel) {
-            await updateImage(image, pixel);
+            await updateImage(bitmap, pixel);
             update = true;
           }
         }
@@ -126,8 +132,8 @@ async function main() {
 
       // Check if we need to update the image
       if (update) {
-        await image.write("./public/image.bmp");
-        await image.write("./public/image.jpg");
+        bitmap.save("./public/image.bmp");
+        convertToJPG();
       }
     });
   });
