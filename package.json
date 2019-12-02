@@ -11,7 +11,7 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "@polkadot/api": "^0.90.0-beta.66",
+    "@polkadot/api": "^0.97.1",
     "bitmap-manipulation": "^2.0.0",
     "ejs": "^2.5.6",
     "express": "^4.15.2",
