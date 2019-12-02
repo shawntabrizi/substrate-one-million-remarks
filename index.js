@@ -10,7 +10,6 @@ express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 var { ApiPromise, WsProvider } = require("@polkadot/api");
-var bitmapManipulation = require("bitmap-manipulation");
 var Jimp = require('jimp');
 
 function toHexString(byteArray) {
@@ -38,12 +37,12 @@ function parseBuffer(buffer) {
     magic = parseInt(string.slice(0, 4));
     x = parseInt(string.slice(4, 7));
     y = parseInt(string.slice(7, 10));
-    color = parseInt("0x" + string.slice(10));
+    color = parseInt("0x" + string.slice(10) + "ff");
   } catch {
     console.log("Bad Info");
   }
 
-  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffff) {
+  if (magic != 1337 || x > 999 || y > 999 || color > 0xffffffff) {
     console.log("Out of Bounds");
     return null;
   }
@@ -57,28 +56,19 @@ function parseBuffer(buffer) {
   return pixel;
 }
 
-function convertToJPG() {
-  Jimp.read('./public/image.bmp', (err, image) => {
-    if (err) throw err;
-    image
-      .quality(100) // set JPEG quality
-      .write('./public/image.jpg'); // save
-  });
-}
-
 async function updateImage(bitmap, pixel) {
   let x = pixel.x;
   let y = pixel.y;
   let color = pixel.color;
 
-  bitmap.drawFilledRect(x, y, 1, 1, null, bitmap.palette.indexOf(color));
+  await bitmap.setPixelColour(color, x, y);
 }
 
 // Main function which needs to run at start
 async function main() {
   // Substrate node we are connected to and listening to remarks
-  // const provider = new WsProvider("wss://dev-node.substrate.dev:9944");
-  const provider = new WsProvider("wss://cc3-5.kusama.network/");
+  //const provider = new WsProvider("ws://localhost:9944");
+  const provider = new WsProvider("wss://kusama-rpc.polkadot.io/");
 
   const api = await ApiPromise.create({ provider });
 
@@ -97,15 +87,18 @@ async function main() {
 
   // Try to open the file, else create a new bitmap
   try {
-    bitmap = bitmapManipulation.BMPBitmap.fromFile("./public/image.bmp");
+    bitmap = await Jimp.read('./public/image.bmp');
     console.log("file found");
   } catch {
     console.log("file NOT found");
-    bitmap = new bitmapManipulation.BMPBitmap(1000, 1000);
-    bitmap.clear(bitmap.palette.indexOf(0x000000));
-    bitmap.save("./public/image.bmp");
-    convertToJPG();
+    bitmap = new Jimp(1000, 1000, (err, image) => {
+      // this image is 1000 x 1000, every pixel is set to 0x00000000
+    });
+    await bitmap.writeAsync("./public/image.bmp");
+    await bitmap.writeAsync("./public/image.jpg")
   }
+
+  let index = 0;
 
   // Subscribe to new blocks being produced, not necessarily finalized ones.
   const unsubscribe = await api.rpc.chain.subscribeNewHeads(async header => {
@@ -132,8 +125,8 @@ async function main() {
 
       // Check if we need to update the image
       if (update) {
-        bitmap.save("./public/image.bmp");
-        convertToJPG();
+        await bitmap.writeAsync("./public/image.bmp");
+        await bitmap.writeAsync("./public/image.jpg")
       }
     });
   });
