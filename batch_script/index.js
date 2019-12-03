@@ -24,11 +24,17 @@ function sleep(ms) {
 async function main() {
   // Substrate node we are connected to and listening to remarks
   //const provider = new WsProvider('ws://localhost:9944');
-  const provider = new WsProvider("wss://kusama-rpc.polkadot.io/");
+  const provider = new WsProvider('wss://kusama-rpc.polkadot.io/');
+  //const provider = new WsProvider("wss://cc3-5.kusama.network/");
 
   const api = await ApiPromise.create({ provider });
 
-  const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+  // Add account with Polkadot JS JSON
+  keyring.addFromJson({
+    /* ADD JSON HERE */
+  });
+  keyring.getPair('ADDRESS').decodePkcs8('password');
+  let account = keyring.getPair('ADDRESS');
 
   // Get general information about the node we are connected to
   const [chain, nodeName, nodeVersion] = await Promise.all([
@@ -42,37 +48,50 @@ async function main() {
 
   let image;
 
-  // Try to open the file, else create a new bitmap
+  // Try to open the file, else exit.
   try {
-    image = await Jimp.read('input.jpg');
-
+    image = await Jimp.read('input.bmp');
     console.log('file found');
   } catch {
     console.log('file NOT found');
-    return;
+    process.exit(1);
   }
 
-  image.resize(100, 100);
+  // Optional Resize
+  // image.resize(100, 100);
 
+  // Starting Location for your image. Top left corner.
   let start = {
-    x: 500,
-    y: 500
+    x: 450,
+    y: 490
   };
 
-  heightStart = 0;
+  // The area of your image you want to send
+  // Height
+  let heightStart = 0; //0;
+  let heightEnd = image.bitmap.height; //image.bitmap.height
+  // Width
+  let widthStart = 0; //0;
+  let widthEnd = image.bitmap.width; //image.bitmap.width;
 
-  let aliceNonce = await api.query.system.accountNonce(alice.address);
+  let accountNonce = await api.query.system.accountNonce(account.address);
 
-  for (let i = heightStart; i < image.bitmap.height; i++) {
-    console.log("Row: " + i);
-
-    image.scan(0, i, image.bitmap.width, 1, async function(x, y, idx) {
+  image.scan(
+    widthStart,
+    heightStart,
+    widthEnd - widthStart,
+    heightEnd - heightStart,
+    async function(x, y, idx) {
       var red = this.bitmap.data[idx + 0];
       var green = this.bitmap.data[idx + 1];
       var blue = this.bitmap.data[idx + 2];
       var alpha = this.bitmap.data[idx + 3];
 
-      let txNonce = parseInt(aliceNonce) + x + (y - heightStart) * image.bitmap.width;
+      // Construct a set of sequential nonces based on the area you want to submit.
+      let txNonce =
+        parseInt(accountNonce) +
+        (x - widthStart) +
+        (y - heightStart) * (widthEnd - widthStart);
 
       let hex = intToHex(red) + intToHex(green) + intToHex(blue);
       let input =
@@ -81,7 +100,7 @@ async function main() {
 
       const unsub = await api.tx.system
         .remark(input)
-        .signAndSend(alice, { nonce: txNonce }, result => {
+        .signAndSend(account, { nonce: txNonce }, result => {
           console.log(`${x}, ${y}: Current status is ${result.status}`);
 
           if (result.status.isFinalized) {
@@ -91,11 +110,8 @@ async function main() {
             unsub();
           }
         });
-    });
-
-    await sleep(20000);
-
-  }
+    }
+  );
 }
 
 main().catch(console.error);
