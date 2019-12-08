@@ -11,5 +11,7 @@ npm-debug.log
 Dockerfile
 docker-compose.yml
 
-image.bmp
-image.jpg
+*.bmp
+*.jpg
+*.png
+*.json
