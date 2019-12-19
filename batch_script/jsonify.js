@@ -6,7 +6,7 @@ async function main() {
 
   // Try to open the file, else exit.
   try {
-    image = await Jimp.read('input2.bmp');
+    image = await Jimp.read('owl.png');
     console.log('file found');
   } catch {
     console.log('file NOT found');
@@ -14,14 +14,14 @@ async function main() {
   }
 
   // Optional Resize
-  // image.resize(100, JIMP.auto);
+  image.resize(160, Jimp.AUTO);
 
   let finalJson = [];
 
   // Starting Location for your image. Top left corner.
   let start = {
-    x: 900,
-    y: 0
+    x: 300,
+    y: 300
   };
 
   await image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(
@@ -34,8 +34,8 @@ async function main() {
     var blue = this.bitmap.data[idx + 2];
     var alpha = this.bitmap.data[idx + 3];
 
-	let finalx = x + start.x;
-	let finaly = y + start.y;
+    let finalx = x + start.x;
+    let finaly = y + start.y;
 
     if (alpha == 0xff && finalx < 1000 && finaly < 1000) {
       finalJson.push({
@@ -46,12 +46,19 @@ async function main() {
         b: blue
       });
     } else {
-		console.log(`Pixel Skipped: ${x}, ${y}`)
-	}
+      console.log(`Pixel Skipped: ${x}, ${y}`);
+    }
   });
 
   let data = JSON.stringify(finalJson, null, 2);
   fs.writeFileSync('image.json', data);
+}
+
+function ignoreColor(r, g, b) {
+  if (r == 2 && g == 2 && b == 2) {
+    return true;
+  }
+  return false;
 }
 
 main().catch(console.error);
