@@ -3,6 +3,7 @@ const fs = require('fs');
 
 async function main() {
   let image;
+  let remarkable_image;
 
   // Try to open the file, else exit.
   try {
@@ -11,6 +12,14 @@ async function main() {
   } catch {
     console.log('file NOT found');
     process.exit(1);
+  }
+
+  // Try to load existing remarkable
+  try {
+    remarkable_image = await Jimp.read('https://remarkable.w3f.tech/image.png');
+    console.log('remarkable image loaded');
+  } catch {
+    console.log('could NOT load remarkable image');
   }
 
   // Optional Resize
@@ -37,7 +46,12 @@ async function main() {
     let finalx = x + start.x;
     let finaly = y + start.y;
 
-    if (alpha == 0xff && finalx < 1000 && finaly < 1000) {
+    if (
+      alpha == 0xff &&
+      finalx < 1000 &&
+      finaly < 1000 &&
+      !alreadyRemarkable(start, x, y, red, green, blue, remarkable_image)
+    ) {
       finalJson.push({
         x: finalx,
         y: finaly,
@@ -59,6 +73,20 @@ function ignoreColor(r, g, b) {
     return true;
   }
   return false;
+}
+
+function alreadyRemarkable(offset, x, y, r, g, b, image) {
+  let hex = image.getPixelColor(x + offset.x, y + offset.y);
+  let existing_pixel = Jimp.intToRGBA(hex);
+
+  console.log(r,g,b,existing_pixel)
+
+  if (existing_pixel.r == r && existing_pixel.g == g && existing_pixel.b == b) {
+    console.log("Already remarkable!")
+    return true;
+  } else {
+    return false;
+  }
 }
 
 main().catch(console.error);

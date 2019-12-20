@@ -58,9 +58,9 @@ async function main() {
   let imagelength = image.length;
 
   // How many transactions to send out at once
-  let tx_batch_size = 1;
+  let tx_batch_size = 100;
   // How long to pause before the next batch (ms).
-  let pause_time = 500;
+  let pause_time = 24000;
   // Submit pixels spread out by `pixel_density`
   let pixel_density = 1;
 
