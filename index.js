@@ -40,8 +40,8 @@ var remarkableImage = require('./remarkable/image');
 // Main function which needs to run at start
 async function main() {
   // Substrate node we are connected to and listening to remarks
-  const provider = new WsProvider('ws://localhost:9944');
-  //const provider = new WsProvider('wss://kusama-rpc.polkadot.io/');
+  //const provider = new WsProvider('ws://localhost:9944');
+  const provider = new WsProvider('wss://kusama-rpc.polkadot.io/');
 
   const api = await ApiPromise.create({ provider });
 
