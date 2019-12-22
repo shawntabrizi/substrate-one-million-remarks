@@ -34,7 +34,7 @@ async function main() {
   const api = await ApiPromise.create({ provider });
 
   // Add account with URI
-  // let account = keyring.addFromUri('//Alice', { name: 'Alice default' });
+   let account = keyring.addFromUri('//Alice', { name: 'Alice default' });
   // Add account with Polkadot JS JSON
   let input_json = require('./account.json');
   await keyring.addFromJson(input_json);
@@ -58,11 +58,11 @@ async function main() {
   let imagelength = image.length;
 
   // How many transactions to send out at once
-  let tx_batch_size = 100;
+  let tx_batch_size = 50;
   // How long to pause before the next batch (ms).
-  let pause_time = 12000;
+  let pause_time = 6000;
   // Submit pixels spread out by `pixel_density`
-  let pixel_density = 1;
+  let pixel_density = 10;
 
   let index = 0;
   for (let j = 0; j < pixel_density; j++) {
@@ -71,8 +71,8 @@ async function main() {
     // Loop backwards because we remove elements
     for (let i = imagelength - 1; i >= 0; i -= pixel_density) {
       try {
-        index += 1;
         let txNonce = parseInt(accountNonce) + parseInt(index);
+        index += 1;
 
         // Send a batch of transactions then pause
         if (index % tx_batch_size == 0) {
