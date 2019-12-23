@@ -79,10 +79,10 @@ function alreadyRemarkable(offset, x, y, r, g, b, image) {
   let hex = image.getPixelColor(x + offset.x, y + offset.y);
   let existing_pixel = Jimp.intToRGBA(hex);
 
-  console.log(r,g,b,existing_pixel)
+  console.log(r, g, b, existing_pixel);
 
   if (existing_pixel.r == r && existing_pixel.g == g && existing_pixel.b == b) {
-    console.log("Already remarkable!")
+    console.log('Already remarkable!');
     return true;
   } else {
     return false;

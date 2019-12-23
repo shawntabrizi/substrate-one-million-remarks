@@ -34,7 +34,7 @@ async function main() {
   const api = await ApiPromise.create({ provider });
 
   // Add account with URI
-   let account = keyring.addFromUri('//Alice', { name: 'Alice default' });
+  // let account = keyring.addFromUri('//Alice', { name: 'Alice default' });
   // Add account with Polkadot JS JSON
   let input_json = require('./account.json');
   await keyring.addFromJson(input_json);

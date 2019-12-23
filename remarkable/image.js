@@ -14,8 +14,8 @@ async function initialize() {
     image = new Jimp(1000, 1000, 0x000000ff, (err, image) => {
       // this image is 1000 x 1000, every pixel is set to 0x000000ff
     });
-	await image.writeAsync('./public/image.png');
-	console.log('Remarkable Image: Image Created');
+    await image.writeAsync('./public/image.png');
+    console.log('Remarkable Image: Image Created');
   }
   console.log('Remarkable Image: Initialized');
 }
@@ -71,8 +71,8 @@ async function update() {
       await image.setPixelColour(color, x, y);
     }
 
-	await image.writeAsync('./public/image.png');
-	console.log("Remarkable Image: Updated");
+    await image.writeAsync('./public/image.png');
+    console.log('Remarkable Image: Updated');
   }
 
   // Reset state
