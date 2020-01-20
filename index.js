@@ -82,8 +82,10 @@ async function main() {
             switch (prefix) {
               case '1337':
                 remarkableImage.parse(buffer);
+                break;
               case 'c4a7':
                 remarkableChat.parse(buffer, sender, blockNumber);
+                break;
             }
           }
         }
